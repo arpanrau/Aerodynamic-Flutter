@@ -1,0 +1,177 @@
+\documentclass[]{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+
+
+
+\bibliography{DynamicsFinalProject}
+
+
+
+%opening
+\title{ENGR 2340 Final Project: Computational Modeling of Aerodynamic Flutter}
+\author{Arpan Rau}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+This project models aerodynamic Flutter in a wing section. 
+
+Currently, this project produces no useful results due to model conditions exceeding the bounds of an angle-of-attack assumption; a forthcoming switch to an emperically-based lift model will fix this. 
+
+
+\end{abstract}
+
+\section{Project Background}
+
+This project's primary goal is to produce a Python Model of Aerodynamic flutter.There are many different types of airfoil flutter, but the basic 'Pitch-Plunge' mechanism, which will be the focus of this project, is such :
+
+\begin{enumerate}
+	\item Flutter is initiated by a rotation of the airfoil to a positive angle of attack
+	\item As the increased aerodynamic lift causes the airfoil to rise, the torsional stiffness of the structure returns the airfoil to 0 angle of attack.
+	\item The bending stiffness of the wing returns the airfoil to a neutral position, but the airfoil rotates into a negative angle of attack
+	\item The aerodynamic force causes the airfoil to plunge and torsional stiffness returns the airfoil to 0 angle of attack.
+	\item The bending stiffness of the wing returns the airfoil to a neutral position, but at a positive angle of attack.
+\end{enumerate}
+
+This pattern continues. Because aerodynamic forces can twist or bend the wing farther each oscillation, this flutter can lead to the wing breaking off the aircraft. The second failure of famed early Aviator Samuel Langley's prototype on the Potomac can be attributed to flutter. 
+
+\begin{figure}[H]
+	\includegraphics[width=8cm]{PitchPlunge}
+	\centering
+	\caption{Example of Pitch-Plunge Motion[1]}
+\end{figure}
+
+
+Aerodynamic flutter is a complex behavior that arises from the interplay of different forces,so it is difficult to anticipate without modeling the entire system. A flutter model must capture at a minimum aerodynamic forces, wing bending, and wing torsion, but can be expanded to include forces and moments from control surfaces, wing-mounted engine nacelles, or even fuel slosh in wing tanks (which, without baffling, can be significant). Before the causes of flutter were well-defined, Aircraft designers were forced to resort to trial and error. Nowadays, there is significant interest in better modeling flutter in wind turbines, allowing for blades that have a wider range of operating conditions. 
+
+\section{Learning Objectives}
+
+The primary learning goal considered in developing this project was gaining familiarity working with fluid forces and aerodynamic effects. As an Aerospace engineer, I often find myself struggling in technical interviews due to my lack of a fluids and aerodynamics background. This project was meant to bridge gaps in my interview skill-set.
+
+In addition, I would like to refresh my working structural engineering knowledge, keeping the closed-form solutions for things like beam bending under a constant load and beam torsion in my working memory. I'd like to work with some form of web interface, as I often in industry find myself building Python models that only I am able to run. Lastly and mostly generally, I'd like to gain experience modeling dynamic systems, as opposed to the more static structures I am used to .
+
+As such, I formulated the following goals for the project:
+
+\begin{itemize}
+	\item Produce a model which represents some form of aerodynamic instability
+	\item Ensure the model provides some form of useful engineering output
+	\item Produce some form of 2D GUI, Animation, or Rendering 
+\end{itemize}
+
+\section{System Model}
+
+A pitch-plunge flutter system is a mass-spring system excited by Aerodynamic forces. Each wing section experiences Lift and Aerodynamic moments about the Aerodynamic center and an Elastic force and moment about it's Elastic axis. 
+This model solves for the acceleration of the wing at each discrete time-step using $\Sigma F = MA$ and $\Sigma T = I \alpha$. It then updates wing position and velocity to reflect those values. 
+
+
+\begin{figure}[H]
+	\includegraphics[width=12cm]{MassSpring}
+	\centering
+	\caption{Simplified System Model[1]}
+\end{figure}
+
+It is important to remember that the wing is a three-dimensional structure, with each 2D wing cross-section experiencing the above effects. For modeling simplicity, this model approximates the wing as a rigid wing section of a given width attached to a massless beam section which experiences no aerodynamic effects. 
+
+
+\begin{figure}[H]
+	\includegraphics[width=12cm]{ds}
+	\centering
+	\caption{Wing planform simplification}
+\end{figure}
+
+\subsection{Driving Assumptions}
+
+\begin{itemize}
+	
+	\item Wing is composed of rigid airfoil section attached to Massless Beam (Ignoring Aerodynamic forces on most of the wing to simplify model)
+	
+	\item Flow over the wing has a speed of less than Mach .3 (incompressible flow)
+	
+	\item Tip wash on wing is negligible (Airfoil can be modeled in 2D sections)
+	
+	\item Airfoil used is symmetric (Aerodynamic moment is 0 about Aerodynamic center)
+	
+	\item Flow Reynolds number is between $10^4$ and $10^7$
+	
+	\item Airfoil stall happens instantaneously when the airfoil passes 15 degrees angle of attack. 
+	
+	\item Wing is rigid in bending about z-axis (Drag can be ignored)
+	
+	\item Airfoil used is a NACA 16-006 airfoil of chord length .2 M , made of Medium-Density-Fiberboard
+	
+	\item Massless beam section was attached at center of mass of airfoil section $(X_{gc} = 0)$
+	
+
+\end{itemize}
+
+
+\subsection{Symbols Used}
+
+\begin{itemize}
+	
+	\item $R$ = Radius of circular beam cross-section
+	\item $E$ = Modulus of Elasticity of the beam material, Pa
+	\item $I$ = Moment of Inertia of the beam , Meters$^4$. For a circular beam,calculated as $\dfrac{\pi R^4}{4}$
+	\item $z$ = Vertical Deflection of elastic axis
+	\item $F_e$ = Elastic force due to deflection of beam
+	\item $l$ = Length of massless beam section, Meters
+	\item $\theta$= Angle of wing twist about elastic axis, Radians
+	\item $T_e$ = Moment exerted by beam about elastic axis
+	\item $J$ = Torsional Constant of the Beam. For a circular beam, calculated as $\dfrac{\pi R^2}{2}$
+	\item $G$ = Shear Modulus of Beam Material, Pa
+	\item $x_{ac}$ = Distance in meters from Elastic axis to Aerodynamic Center. For this model, it assumed both lie on the X=0 axis.
+	\item $x_{fc}$ = Distance in meters from Elastic axis to Center of Gravity. For this model, it assumed both lie on the X=0 axis.
+	\item$C_{l\alpha}$ = Section Lift Coefficient of Airfoil for a given angle of attack
+	\item$S$ = Length of rigid airfoil section
+	\item$F_l$ = Lift force generated by wing
+	\item$Rho$ = Density of Airflow over wing, kg/m$^3$
+	\item$u$ = Velocity of Airflow over wing, m/s
+	\item$I_{wing}$ = Moment of inertia of the airfoil section about the elastic center, Meters$^4$. Computed by modeling wing in Onshape.
+	\item$M_{wing}$ = Mass of the airfoil section, Kg. Computed by modeling wing in Onshape.
+	\item$\rho_{airfoil}$ = Density of airfoil, kg/M$^3$
+	
+	
+\end{itemize}
+
+\subsection{Elastic (Bending) Forces and Moments}
+
+As the airfoil section of the wing is modeled as rigid, the beam section is the source of all bending forces. 
+
+The beam section of the wing is attached to the aircraft on one end and unsupported on the other, experiencing the load of the airfoil. As such, the deflection of the beam for a given force  can be given by $z = \dfrac{-{F_e} l^3}{3EI}$.[2] Rearranging this in terms of $F_e$ results in $F_e = \dfrac{ -3zEI}{l^3}$
+
+The beam acts as a torsion spring. The angular deflection (setting positive rotation to be counterclockwise rotation about the Y-Axis) about the elastic axis, $\theta = \dfrac{- T_e l}{JG}$. [2] Rearranging this for $T_e$ results in $T_e = \dfrac{-\theta JG}{l}$
+
+
+\subsection{Aerodynamic Forces and Moments}
+
+Because the airfoil used is symmetric, it experiences no moments about its aerodynamic center (Assumed to be located at the 1/4-chord location), and a lift force at this center. That lift force can be defined by $F_l = \dfrac{1}{2} \rho u^2 S C_{l\alpha}$ [3]
+
+$C_{l\alpha}$ for a thin symmetric airfoil can be found by thin-airfoil theory to be $C_{l\alpha} = 2 \pi \alpha $. [3] This holds true up to angles of attack of roughly 15 degrees, after which point it is assumed the wing stalls and produces no lift.
+
+Because the aerodynamic center of the wing is not the elastic axis, the moment about the elastic axis due to the lift force is $T_l = x_{ac} F_l$. [3]
+
+
+\subsection{Equations of Motion}
+
+ $\Sigma F = MA$ and $\Sigma T = I \alpha$.
+ Therefore, $\alpha = \ddot{\theta} = \dfrac{\Sigma T}{I_{wing}} = \dfrac{T_e+T_l}{I_{wing}} = \dfrac{x_{ac} \dfrac{1}{2} \rho u^2 S C_{l\alpha} - \dfrac{l}{\theta JG}}{I_{wing}}$
+ Similarly, $A = \ddot{z} = \dfrac{\Sigma F }{M_{wing}} = \dfrac{F_e+F_l}{M_{wing}} = \dfrac{\dfrac{1}{2} \rho u^2 S C_{l\alpha}-\dfrac{l^3}{3zEI}}{M_{wing}}$
+ 
+ 
+
+\section{Results}
+
+This model captures high-frequency aerodynamic flutter particularly well. Though the wing modeled does not produce divergent conditions and torsional wing failure, other wings with lower stiffnesses and more gradual stall conditions could. 
+
+My learning objectives for this project were to 
+
+
+
+\end{document}
